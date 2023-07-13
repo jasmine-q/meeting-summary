@@ -85,32 +85,36 @@ for i, chunk in enumerate(chunks):
 
 
 llm = OpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"))
-loader = DirectoryLoader('.', glob="*.txt", loader_cls=TextLoader)
+loader = DirectoryLoader('.', glob="chunk*.txt", loader_cls=TextLoader)
 
 docs = loader.load()
+print(len(docs))
 
-prompt_template = """Write a summary that goes over the key points of this meeting transcript:
-Transcript:
-{text}
-"""
-refine_template = (
-    "Your job is to produce a final summary\n"
-    "We have provided an existing summary up to a certain point: {existing_answer}\n"
-    "We have the opportunity to add more to the existing summary"
-    "(only if needed) with some more context below.\n"
-    "------------\n"
-    "{text}\n"
-    "------------\n"
-    "Given the new context, refine the original summary"
-    "If the context isn't useful, return the original summary."
-)
+map_prompt = """
+Write a concise summary of the following:
+  "{text}"
+  CONCISE SUMMARY:
+  """
+map_prompt_template = PromptTemplate(template=map_prompt, input_variables=["text"])
 
-PROMPT = PromptTemplate(template=prompt_template, input_variables=["text"])
-refine_prompt = PromptTemplate(
-    input_variables=["existing_answer", "text"],
-    template=refine_template,
-)
-chain = load_summarize_chain(llm, chain_type="refine", question_prompt=PROMPT, refine_prompt=refine_prompt)
+combine_prompt = """
+Combine the following texts delimited by triple backquotes.
+Don't summarize.
 
-print("starting langchain meeting summarisation...")
-print(chain.run(docs))
+Return your response in bullet points.
+```{text}```
+COMBINED TEXTS:
+  """
+combine_prompt_template = PromptTemplate(template=combine_prompt, input_variables=["text"])
+
+summary_chain = load_summarize_chain(llm=llm,
+                                     chain_type='map_reduce',
+                                     map_prompt=map_prompt_template,
+                                     combine_prompt=combine_prompt_template,
+                                     return_intermediate_steps=True,
+#                                      verbose=True
+                                    )
+result = summary_chain({"input_documents": docs}, return_only_outputs=True)
+
+print(result["intermediate_steps"])
+print(result["output_text"])
