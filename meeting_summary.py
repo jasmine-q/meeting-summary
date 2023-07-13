@@ -85,7 +85,7 @@ for i, chunk in enumerate(chunks):
 
 
 llm = OpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"))
-loader = DirectoryLoader('.', glob="*.txt", loader_cls=TextLoader)
+loader = DirectoryLoader('.', glob="chunk*.txt", loader_cls=TextLoader)
 
 docs = loader.load()
 
