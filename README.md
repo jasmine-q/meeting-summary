@@ -4,6 +4,7 @@ This script is designed to take in a mp4 zoom audio recording and with the power
 
 ## How to run the script
 Created using Python 3.9.2
+Requires [ffmpeg](https://ffmpeg.org) which needs to be installed separately!
 
 Use the `pip install -r requirements.txt` command to install all of the Python modules and packages listed in the requirements.txt file
 
